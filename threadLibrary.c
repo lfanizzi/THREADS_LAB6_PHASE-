@@ -1,4 +1,7 @@
-#include "thread.h"
+#include "ud_thread.h"
+
+extern tcb *running;
+extern tcb *ready;
 
 void t_init(){
     tcb *main;
@@ -7,7 +10,7 @@ void t_init(){
     main->thread_id = 0;
     main->thread_priority = 1;
     main->thread_context = malloc(sizeof(ucontext_t));
-    getContext(main->thread_context); //Context is that of the current user thread.
+    getcontext(main->thread_context); //Context is that of the current user thread.
     main->next = NULL;
 
     running = main;
@@ -30,7 +33,6 @@ void t_shutdown(){
 }
 
 int t_create(void (*func)(int), int threadId, int priority){
-    sighold();
 
     tcb *new = malloc(sizeof(tcb));
     size_t stackSize = 0x10000;
@@ -43,11 +45,10 @@ int t_create(void (*func)(int), int threadId, int priority){
     new->thread_context->uc_stack.ss_sp = malloc(stackSize);
     new->thread_context->uc_stack.ss_size = stackSize;
     new->thread_context->uc_stack.ss_flags = 0;
-    makecontext(new->thread_context,  func, 1, threadId);
+    makecontext(new->thread_context, func, 1, threadId);
 
     addToReadyList(new);
 
-    sigrelse();
     return 0;
 }
 
@@ -66,16 +67,20 @@ void t_terminate(){
 
 }
 
-void t_yeild(){
-    tcb *current = running;
+void t_yield(){
+    tcb *previousRunning;
+    previousRunning = running;
     
     getNextReady();
+    addToReadyList(previousRunning);
 
-    addToReadyList(current);
+    printf("runningId: %d\n", running->thread_id);
+    for(tcb *temp = ready; temp != NULL; temp = temp->next){
+        printf("readyId: %d\n", temp->thread_id);
+    }
 
-    swapcontext(running->thread_context, current->thread_context);
-
-
+    printf("end\n");
+    swapcontext(previousRunning->thread_context, running->thread_context);
 }
 
 void getNextReady(){
@@ -83,8 +88,6 @@ void getNextReady(){
         running = ready;
         ready = ready->next;
         running->next = NULL;
-    }else{
-        running = NULL;
     }
 }
 
@@ -102,7 +105,7 @@ void addToReadyList(tcb * threadNode){
         } else {
 
             tcb *temp = ready;
-            while (temp->next != NULL && threadNode->thread_priority > temp->next->thread_priority){
+            while (temp->next != NULL && threadNode->thread_priority >= temp->next->thread_priority){
                 temp = temp->next;
             }
             temp->next = threadNode;

@@ -2,11 +2,11 @@
 CC=gcc
 # CC=gcc -Wall
 
-mysh: *.c *.o
-	$(CC) -g *.o -o mysh
+mysh: threadLibrary.o
+	$(CC) -g T1.c threadLibrary.c -o T1
 
-*.o: *.c
-	$(CC) -g -c *.c
+threadLibrary.o : threadLibrary.c
+	$(CC) -g -c threadLibrary.c
 
 clean:
 	rm *.o mysh
