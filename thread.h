@@ -2,23 +2,25 @@
 #include <stdlib.h>
 #include <semaphore.h>
 #include <pthread.h>
+#include <ucontext.h>
+#include <unistd.h>
 
-#include <unistd.h>  //included files and libraries
-//Definitions
-void t_init(void);
-void t_shutdown(void);
-int t_create(void (*func)(int), int thr_id, int pri, int ready_index);
-void t_terminate(void);
-void t_yield(void);
-struct tcb  //structure
-{
+typedef struct tcb{
     int thread_id;
     int thread_priority;
     ucontext_t *thread_context;
     struct tcb *next;
-};
+}tcb;
 
-typedef struct tcb tcb;
-//int ready_index, running_index = 0;
+void t_init(void);
+void t_shutdown(void);
+int t_create(void (*func)(int), int thr_id, int pri);
+void t_terminate(void);
+void t_yield(void);
+void getNextReady();
+void addToReadyList(tcb * threadNode);
+
+
+
 tcb *running;
 tcb *ready;
