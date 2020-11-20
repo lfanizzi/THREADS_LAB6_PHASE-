@@ -1,8 +1,5 @@
 #include "ud_thread.h"
 
-extern tcb *running;
-extern tcb *ready;
-
 void t_init(){
     tcb *main;
     main = malloc(sizeof(tcb));
@@ -21,10 +18,10 @@ void t_shutdown(){
     tcb *current = ready;
     tcb *previous;
 
-    while (current != NULL){
-        free(current->thread_context);
+    while (current->next != NULL){
         previous = current;
         current = current->next;
+        free(previous->thread_context);
         free(previous);
     }
 
@@ -81,7 +78,6 @@ void t_yield(){
     //     printf("readyId: %d\n", temp->thread_id);
     // }
 
-    printf("end\n");
     swapcontext(previousRunning->thread_context, running->thread_context);
 }
 
