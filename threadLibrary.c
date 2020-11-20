@@ -42,6 +42,8 @@ int t_create(void (*func)(int), int threadId, int priority){
     new->thread_context = malloc(sizeof(ucontext_t));
     new->next = NULL;
 
+    getcontext(new->thread_context);//Must call getcontext before calling makecontext!!
+
     new->thread_context->uc_stack.ss_sp = malloc(stackSize);
     new->thread_context->uc_stack.ss_size = stackSize;
     new->thread_context->uc_stack.ss_flags = 0;
@@ -74,10 +76,10 @@ void t_yield(){
     getNextReady();
     addToReadyList(previousRunning);
 
-    printf("runningId: %d\n", running->thread_id);
-    for(tcb *temp = ready; temp != NULL; temp = temp->next){
-        printf("readyId: %d\n", temp->thread_id);
-    }
+    // printf("runningId: %d\n", running->thread_id);
+    // for(tcb *temp = ready; temp != NULL; temp = temp->next){
+    //     printf("readyId: %d\n", temp->thread_id);
+    // }
 
     printf("end\n");
     swapcontext(previousRunning->thread_context, running->thread_context);
